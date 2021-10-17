@@ -5,7 +5,7 @@ plugins {
     maven
     `maven-publish`
     signing
-    val kotlinVersion = "1.5.30"
+    val kotlinVersion = "1.5.31"
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.serialization").version(kotlinVersion)
 }
@@ -17,7 +17,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
     }
 }
 subprojects {
@@ -109,7 +108,7 @@ subprojects {
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
         implementation("io.github.microutils:kotlin-logging:2.0.11")
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.3")
+        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.3.0")
         implementation("com.squareup.okio:okio:3.0.0-alpha.10")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
     }
