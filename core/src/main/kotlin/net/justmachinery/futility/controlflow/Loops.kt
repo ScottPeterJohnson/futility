@@ -24,16 +24,15 @@ public fun <T> repeatUntilNotNull(cb : (Int)->T?) : T {
 public fun <T> conditionalRepeat(
     maximumAttempts : Int? = null,
     maxBackoffWait : Long = 0L,
-    cb : ConditionalRepeatContext<T>.(Int)->ConditionalRepeat<T>
+    cb : ConditionalRepeatContext<T>.()->ConditionalRepeat<T>
 ) : T? {
-    val context = ConditionalRepeatContext<T>()
+    val context = ConditionalRepeatContext<T>(maximumAttempts)
     var backoff = min(100, maxBackoffWait)
-    var iteration = 0
     while(true){
-        when(val result = cb(context, iteration)){
+        when(val result = cb(context)){
             is ConditionalRepeat.Repeat -> {
-                iteration += 1
-                if(maximumAttempts != null && iteration >= maximumAttempts){
+                context.iteration += 1
+                if(maximumAttempts != null && context.iteration >= maximumAttempts){
                     return null
                 }
                 if(maxBackoffWait != 0L){
@@ -48,9 +47,11 @@ public fun <T> conditionalRepeat(
         }
     }
 }
-public class ConditionalRepeatContext<T> {
+public class ConditionalRepeatContext<T>(private val maximumAttempts : Int?) {
+    public var iteration : Int = 0
     public val repeat: ConditionalRepeat.Repeat<T> = ConditionalRepeat.Repeat<T>()
     public fun done(value : T): ConditionalRepeat.Done<T> = ConditionalRepeat.Done(value)
+    public val isLastRepeat : Boolean get() = maximumAttempts != null && iteration >= maximumAttempts - 1
 }
 public val ConditionalRepeatContext<Unit>.done: ConditionalRepeat.Done<Unit> get() = done(Unit)
 
@@ -90,29 +91,30 @@ public fun <T> repeatOnThrow(
 /**
  * Run [transform] repeatedly until it returns [LoopCollectContext.done], then return all [LoopCollectContext.add] results in a list
  */
-public fun <T> loopCollect(transform : LoopCollectContext<T>.()->LoopCollect<T>) : List<T> {
-    val context = LoopCollectContext<T>()
+public fun <T> loopCollect(transform : LoopCollectContext<T>.()->LoopCollect) : List<T> {
     val results = mutableListOf<T>()
+    val context = LoopCollectContext(results)
     while(true){
-        when(val result = transform(context)){
-            is LoopCollect.Add -> {
-                results.add(result.value)
-            }
-            is LoopCollect.Done -> {
-                return results
-            }
+        if(transform(context) == LoopCollect.DONE){
+            return results
         }
         context.first = false
     }
 }
-public class LoopCollectContext<T> {
-    public val done: LoopCollect.Done<T> = LoopCollect.Done<T>()
-    public fun add(value : T): LoopCollect.Add<T> = LoopCollect.Add(value)
+public class LoopCollectContext<T>(private val results : MutableList<T>) {
+    public val repeat: LoopCollect = LoopCollect.REPEAT
+    public val done: LoopCollect = LoopCollect.DONE
+    public fun add(value : T) {
+        results.add(value)
+    }
+    public fun addAll(values : List<T>) {
+        results.addAll(values)
+    }
     public var first : Boolean = true
 }
-public sealed class LoopCollect<T> {
-    public data class Add<T>(val value : T) : LoopCollect<T>()
-    public class Done<T> : LoopCollect<T>()
+public enum class LoopCollect {
+    REPEAT,
+    DONE
 }
 
 /**

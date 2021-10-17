@@ -10,6 +10,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 
 public data class ShutdownHookPriority(val priority : Double) : Comparable<ShutdownHookPriority> {
+    public companion object {
+        public val EXECUTOR_STOP_TASKS: ShutdownHookPriority = ShutdownHookPriority(10.0)
+    }
     override fun compareTo(other: ShutdownHookPriority): Int = this.priority.compareTo(other.priority)
 }
 public val StopExecutors: ShutdownHookPriority = ShutdownHookPriority(1.0)

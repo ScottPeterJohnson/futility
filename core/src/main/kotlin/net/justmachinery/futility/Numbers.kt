@@ -10,3 +10,9 @@ public fun Long.clampToInt() : Int {
         else -> this.toInt()
     }
 }
+
+/**
+ * Divides [this] by [divisor], rounding up if there is any remainder.
+ */
+public fun Long.divRoundUp(divisor : Long) : Long = (this + divisor - 1) / divisor
+public fun Int.divRoundUp(divisor : Int) : Int = (this + divisor - 1) / divisor

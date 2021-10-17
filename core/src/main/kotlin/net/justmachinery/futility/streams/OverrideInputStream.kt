@@ -22,4 +22,5 @@ public open class OverrideInputStream(public val input: InputStream) : InputStre
     override fun reset(): Unit = input.reset()
     override fun skip(n: Long): Long = input.skip(n)
     override fun transferTo(out: OutputStream?): Long = input.transferTo(out)
+    override fun skipNBytes(n: Long): Unit = input.skipNBytes(n)
 }

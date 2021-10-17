@@ -4,7 +4,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.reflect.KClass
 
-public inline fun <T, reified R : T> T.castOrNull() : R? {
+public inline fun <T, reified R : T> T.tryCast() : R? {
     return if(this is R) this else null
 }
 

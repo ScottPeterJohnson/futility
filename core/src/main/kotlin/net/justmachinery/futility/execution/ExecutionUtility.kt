@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import mu.KLogging
 import net.justmachinery.futility.bytes.GiB
 import net.justmachinery.futility.bytes.MiB
+import net.justmachinery.futility.lazyMutable
 import org.slf4j.MDC
 import java.lang.Runnable
 import java.time.Duration
@@ -12,49 +13,83 @@ import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 
-private class ExecutionUtility {
-    companion object : KLogging()
+
+public var pools : ExecutionPools by lazyMutable { DefaultPools() }
+
+public interface ExecutionPools {
+	/**
+	 * Single-thread scheduler service
+	 */
+	public val schedulerService : ScheduledExecutorService
+	/**
+	 * Primary pool of executors for background tasks, expected to be shared and reused.
+	 */
+	public val defaultExecutor : ExecutorService
+
+	/**
+	 * A global scope for launching coroutines- perhaps based on the executor service
+	 */
+	public val coroutines : CoroutineScope
+
+	/**
+	 * An executor service which should always have new threads available, and can reuse old ones
+	 */
+	public val reuseThreads : ExecutorService
 }
 
-/**
- * Primary pool of executors for background task, expected to be shared and reused.
- * You may replace this pool at runtime (be sure to shut down the old one).
- */
-public var defaultExecutor: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(
-	Runtime.getRuntime().availableProcessors(),
-	makeThreadFactory("executor")
-).apply {
-	//At an guesstimated 1 MB stack size, try to use at most 1/4th of the JVM's memory on threads for this pool.
-	maximumPoolSize = (Runtime.getRuntime().maxMemory().coerceAtMost(256L.GiB) / 4 / 1.MiB).toInt()
-    executeExistingDelayedTasksAfterShutdownPolicy = false
-	addJvmShutdownHook(StopExecutors) {
-		ExecutionUtility.logger.info { "Cancelling outstanding coroutines" }
-		runBlocking {
-			supervisor.cancelAndJoin()
-		}
-		ExecutionUtility.logger.info { "Shutting down executor service" }
-        //I hate this complexity, but we need a way to gracefully shut down an executor whose tasks might submit further tasks.
-        outer@ while(true){
-            for(i in 0..5){
-                if(i != 0){
-                    Thread.sleep(10)
-                }
-                if(activeCount > 0) continue@outer
-            }
-            break
-        }
-        this.shutdown()
-		this.awaitTermination(99, TimeUnit.DAYS)
-		ExecutionUtility.logger.info { "Executor shutdown complete" }
+public class DefaultPools : ExecutionPools {
+	public override var schedulerService: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1, makeThreadFactory("scheduler")).apply {
+		executeExistingDelayedTasksAfterShutdownPolicy = false
 	}
-}
-private val dispatcher by lazy { defaultExecutor.asCoroutineDispatcher() }
-private val supervisor = SupervisorJob()
 
-/**
- * A useful global coroutine scope for executing on the background service
- */
-public val backgroundCoroutine: CoroutineScope = CoroutineScope(supervisor + dispatcher)
+	@Volatile private var shuttingDown = false
+	public override var defaultExecutor: ThreadPoolExecutor = run {
+		//See https://stackoverflow.com/a/24493856
+		val queue = object : LinkedTransferQueue<Runnable>() {
+			override fun offer(e: Runnable): Boolean {
+				return tryTransfer(e)
+			}
+		}
+		val maxPoolSize = (Runtime.getRuntime().maxMemory().coerceAtMost(256L.GiB) / 4 / 1.MiB).toInt()
+		val pool = ThreadPoolExecutor(10, maxPoolSize, 15, TimeUnit.SECONDS, queue)
+
+		pool.threadFactory = makeThreadFactory("executor")
+		pool.rejectedExecutionHandler = RejectedExecutionHandler { r, executor ->
+			try {
+				if(!shuttingDown){
+					executor.queue.put(r)
+				} else {
+					throw RejectedExecutionException("Shutting down")
+				}
+			} catch (e: InterruptedException) {
+				Thread.currentThread().interrupt()
+			}
+		}
+
+		addJvmShutdownHook(ShutdownHookPriority.EXECUTOR_STOP_TASKS) {
+			ExecutionUtility.logger.info { "Cancelling outstanding coroutines" }
+			runBlocking {
+				supervisor.cancelAndJoin()
+			}
+			ExecutionUtility.logger.info { "Shutting down executor service" }
+			//I hate this complexity, but we need a way to gracefully shut down an executor whose tasks might submit further tasks.
+			while(pool.activeCount > 0){
+				Thread.sleep(10)
+			}
+			shuttingDown = true
+			schedulerService.shutdown()
+			pool.shutdown()
+			pool.awaitTermination(99, TimeUnit.DAYS)
+			ExecutionUtility.logger.info { "Executor shutdown complete" }
+		}
+		pool
+	}
+	private val dispatcher: CoroutineDispatcher = defaultExecutor.asCoroutineDispatcher()
+	private val supervisor: Job = SupervisorJob()
+	public override val coroutines: CoroutineScope = CoroutineScope(supervisor + dispatcher)
+
+	public override val reuseThreads: ExecutorService = Executors.newCachedThreadPool(makeThreadFactory("reusable-"))
+}
 
 private fun makeThreadFactory(namePrefix : String) : ThreadFactory {
 	return object : ThreadFactory {
@@ -78,7 +113,7 @@ private fun makeThreadFactory(namePrefix : String) : ThreadFactory {
  * This and all other scheduled functions preserve the MDC logging context in the new thread.
  */
 public fun background(cb: () -> Unit) {
-	defaultExecutor.execute(withMdcLogErrors("In background task", cb))
+	pools.defaultExecutor.execute(withMdcLogErrors("In background task", cb))
 }
 
 /**
@@ -89,7 +124,8 @@ public fun scheduled(delay : Duration, cb : ()->Unit) {
 }
 
 public fun scheduled(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) {
-	defaultExecutor.schedule(withMdcLogErrors("In scheduled task", cb), delay, timeUnit)
+	val finalCb = withMdcLogErrors("In scheduled task", cb)
+	pools.schedulerService.schedule({ pools.defaultExecutor.execute(finalCb) }, delay, timeUnit)
 }
 
 
@@ -98,7 +134,8 @@ public fun scheduled(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) {
  * Executes [cb] after [initial], then every [delay]
  */
 public fun periodically(initial : Long, delay : Long, timeUnit : TimeUnit, cb : ()->Unit) : ScheduledFuture<*> {
-    return defaultExecutor.scheduleWithFixedDelay(withMdcLogErrors("In periodic task", cb), initial, delay, timeUnit)
+	val finalCb = withMdcLogErrors("In periodically scheduled task", cb)
+	return pools.schedulerService.scheduleWithFixedDelay({ pools.defaultExecutor.execute(finalCb) }, initial, delay, timeUnit)
 }
 
 /**
@@ -107,18 +144,18 @@ public fun periodically(initial : Long, delay : Long, timeUnit : TimeUnit, cb : 
  */
 public fun <T> future(cb: () -> T): Future<T> {
 	val cmd = withMdc(cb)
-	return defaultExecutor.submit(cmd)
+	return pools.defaultExecutor.submit(cmd)
 }
 
 
-private val reuseThreads = Executors.newCachedThreadPool(makeThreadFactory("reusable-"))
+
 
 /**
  * Run command in a reusable background pool of threads. Unlike background {},
  * this guarantees a new thread will be created if none are available.
  */
 public fun runThread(command: () -> Unit) : Future<*> {
-	return reuseThreads.submit(withMdcLogErrors("While executing runThread") {
+	return pools.reuseThreads.submit(withMdcLogErrors("While executing runThread") {
 		command()
 	})
 }
@@ -153,4 +190,8 @@ private fun <T> withMdc(cb : ()->T) : ()->T {
 			MDC.clear()
 		}
 	}
+}
+
+private class ExecutionUtility {
+	companion object : KLogging()
 }

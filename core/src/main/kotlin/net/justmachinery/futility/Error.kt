@@ -9,6 +9,15 @@ public sealed class ErrorOr<T> {
         is Error -> throw this.exception
         is Result -> this.result
     }
+    public fun asNullable(): T? = when(this){
+        is Error -> null
+        is Result -> result
+    }
+
+    public fun maybeThrow(): T = when(this){
+        is Error -> throw exception
+        is Result -> result
+    }
 }
 
 public sealed class Validity {

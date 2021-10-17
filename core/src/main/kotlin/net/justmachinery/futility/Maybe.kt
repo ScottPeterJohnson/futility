@@ -17,4 +17,11 @@ public sealed class Maybe<T> {
         is Nothing -> null
         is Just<T> -> value
     }
+
+    public fun or(value : T) : T {
+        return when(this){
+            is Nothing -> value
+            is Just<T> -> this.value
+        }
+    }
 }

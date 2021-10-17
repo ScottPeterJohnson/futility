@@ -15,11 +15,14 @@ public fun <R> nullOnException(cb : ()->R) : R? =
 /**
  * Convert the type of any exceptions thrown within [cb] using [ex]
  */
-public inline fun <R> convertThrows(ex : (Throwable)->Throwable, cb : ()->R) : R {
+public inline fun <reified E : Exception, R> convertThrows(ex : (Exception)->E, cb : ()->R) : R {
     try {
         return cb()
-    } catch(t : Throwable){
-        throw ex(t)
+    } catch(t : Exception){
+        if(t is E) throw t
+        else {
+            throw ex(t)
+        }
     }
 }
 

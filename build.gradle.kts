@@ -5,13 +5,13 @@ plugins {
     maven
     `maven-publish`
     signing
-    val kotlinVersion = "1.4.31"
+    val kotlinVersion = "1.5.30"
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.serialization").version(kotlinVersion)
 }
 
 allprojects {
-    version = "1.0.0"
+    version = "1.0.1"
     group = "net.justmachinery.futility"
 
 
@@ -108,9 +108,9 @@ subprojects {
     }
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation("io.github.microutils:kotlin-logging:2.0.4")
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.1.0")
-        implementation("com.squareup.okio:okio:2.10.0")
+        implementation("io.github.microutils:kotlin-logging:2.0.11")
+        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.3")
+        implementation("com.squareup.okio:okio:3.0.0-alpha.10")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
     }
 }
