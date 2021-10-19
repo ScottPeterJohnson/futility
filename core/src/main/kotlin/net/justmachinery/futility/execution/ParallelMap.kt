@@ -8,7 +8,9 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Process items in a number of background threads.
+ * Process items in a number of background threads in the default executor [pools].
+ * Probably a bad idea to call this from a background thread; you could theoretically block all threads in the pool
+ * with parallelMaps which will never progress.
  * @param maxConcurrent Maximum number of background threads running for this call at any given time, or unlimited if null.
  * @param maxBuffer Maximum number of unprocessed results at any time. (Should be larger than maxConcurrent).
  * @param stopOnFirstException Whether to stop the entire sequence from generating future items when the first exception is encountered

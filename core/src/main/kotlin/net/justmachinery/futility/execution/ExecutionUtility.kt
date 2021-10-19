@@ -37,7 +37,12 @@ public interface ExecutionPools {
 	public val reuseThreads : ExecutorService
 }
 
-public class DefaultPools : ExecutionPools {
+public class DefaultPools(
+	private val coreDefaultPoolSize : Int = 10,
+	private val coreDefaultKeepAliveSeconds : Long = 15,
+	private val maxDefaultPoolSize : Int = (Runtime.getRuntime().maxMemory().coerceAtMost(256L.GiB) / 4 / 1.MiB).toInt(),
+	private val shutdownHookPriority: ShutdownHookPriority? = ShutdownHookPriority.EXECUTOR_STOP_TASKS
+) : ExecutionPools {
 	public override var schedulerService: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1, makeThreadFactory("scheduler")).apply {
 		executeExistingDelayedTasksAfterShutdownPolicy = false
 	}
@@ -50,8 +55,7 @@ public class DefaultPools : ExecutionPools {
 				return tryTransfer(e)
 			}
 		}
-		val maxPoolSize = (Runtime.getRuntime().maxMemory().coerceAtMost(256L.GiB) / 4 / 1.MiB).toInt()
-		val pool = ThreadPoolExecutor(10, maxPoolSize, 15, TimeUnit.SECONDS, queue)
+		val pool = ThreadPoolExecutor(coreDefaultPoolSize, maxDefaultPoolSize, coreDefaultKeepAliveSeconds, TimeUnit.SECONDS, queue)
 
 		pool.threadFactory = makeThreadFactory("executor")
 		pool.rejectedExecutionHandler = RejectedExecutionHandler { r, executor ->
@@ -66,21 +70,24 @@ public class DefaultPools : ExecutionPools {
 			}
 		}
 
-		addJvmShutdownHook(ShutdownHookPriority.EXECUTOR_STOP_TASKS) {
-			ExecutionUtility.logger.info { "Cancelling outstanding coroutines" }
-			runBlocking {
-				supervisor.cancelAndJoin()
+		if(shutdownHookPriority != null){
+			addJvmShutdownHook(shutdownHookPriority) {
+				ExecutionUtility.logger.info { "Cancelling outstanding coroutines" }
+				runBlocking {
+					supervisor.cancelAndJoin()
+				}
+				ExecutionUtility.logger.info { "Shutting down executor service" }
+				//I hate this complexity, but we need a way to gracefully shut down an executor whose tasks might submit further tasks.
+				while(pool.activeCount > 0){
+					Thread.sleep(10)
+				}
+				shuttingDown = true
+				schedulerService.shutdown()
+				pool.shutdown()
+				pool.awaitTermination(99, TimeUnit.DAYS)
+				ExecutionUtility.logger.info { "Executor shutdown complete" }
 			}
-			ExecutionUtility.logger.info { "Shutting down executor service" }
-			//I hate this complexity, but we need a way to gracefully shut down an executor whose tasks might submit further tasks.
-			while(pool.activeCount > 0){
-				Thread.sleep(10)
-			}
-			shuttingDown = true
-			schedulerService.shutdown()
-			pool.shutdown()
-			pool.awaitTermination(99, TimeUnit.DAYS)
-			ExecutionUtility.logger.info { "Executor shutdown complete" }
+
 		}
 		pool
 	}
@@ -180,7 +187,10 @@ private fun withMdcLogErrors(info : String = "Toplevel", cb : ()->Unit) : ()->Un
 	}
 }
 
-private fun <T> withMdc(cb : ()->T) : ()->T {
+/**
+ * Captures a copy of the current MDC map and returns a callback that always runs in it
+ */
+public fun <T> withMdc(cb : ()->T) : ()->T {
 	val copy = MDC.getCopyOfContextMap()
 	return {
 		try {
