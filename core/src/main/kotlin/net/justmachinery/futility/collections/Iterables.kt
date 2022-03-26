@@ -45,3 +45,5 @@ public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
 }
 
 public fun <T> Iterable<T>.headTail() : Pair<T, List<T>> = first() to drop(1)
+
+public fun <T, R> Iterable<T>.partitionByMapNotNull(map : (T)->R?) : Pair<Sequence<T>, Sequence<R>> = this.asSequence().partitionByMapNotNull(map)

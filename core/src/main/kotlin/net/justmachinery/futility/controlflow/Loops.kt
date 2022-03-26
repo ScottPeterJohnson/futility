@@ -23,11 +23,12 @@ public fun <T> repeatUntilNotNull(cb : (Int)->T?) : T {
  */
 public fun <T> conditionalRepeat(
     maximumAttempts : Int? = null,
+    initialWait : Long = 100L,
     maxBackoffWait : Long = 0L,
     cb : ConditionalRepeatContext<T>.()->ConditionalRepeat<T>
 ) : T? {
     val context = ConditionalRepeatContext<T>(maximumAttempts)
-    var backoff = min(100, maxBackoffWait)
+    var backoff = min(initialWait, maxBackoffWait)
     while(true){
         when(val result = cb(context)){
             is ConditionalRepeat.Repeat -> {

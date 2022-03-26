@@ -2,16 +2,16 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-gradle-plugin`
-    maven
     `maven-publish`
     signing
-    val kotlinVersion = "1.5.31"
+    val kotlinVersion = "1.6.10"
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.serialization").version(kotlinVersion)
+    id("com.github.ben-manes.versions").version("0.42.0")  //For finding outdated dependencies
 }
 
 allprojects {
-    version = "1.0.2"
+    version = "1.0.3"
     group = "net.justmachinery.futility"
 
 
@@ -20,7 +20,6 @@ allprojects {
     }
 }
 subprojects {
-    apply(plugin = "org.gradle.maven")
     apply(plugin = "org.gradle.maven-publish")
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.kapt")
@@ -107,9 +106,9 @@ subprojects {
     }
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation("io.github.microutils:kotlin-logging:2.0.11")
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.3.0")
-        implementation("com.squareup.okio:okio:3.0.0-alpha.10")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
+        implementation("io.github.microutils:kotlin-logging:2.1.21")
+        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.3.2")
+        implementation("com.squareup.okio:okio:3.0.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     }
 }

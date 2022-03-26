@@ -6,9 +6,7 @@ import net.justmachinery.futility.bytes.GiB
 import net.justmachinery.futility.bytes.MiB
 import net.justmachinery.futility.lazyMutable
 import org.slf4j.MDC
-import java.lang.Runnable
 import java.time.Duration
-import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
@@ -144,6 +142,7 @@ public fun periodically(initial : Long, delay : Long, timeUnit : TimeUnit, cb : 
 	val finalCb = withMdcLogErrors("In periodically scheduled task", cb)
 	return pools.schedulerService.scheduleWithFixedDelay({ pools.defaultExecutor.execute(finalCb) }, initial, delay, timeUnit)
 }
+public fun periodically(initial : Duration, delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(initial.toMillis(), delay.toMillis(), TimeUnit.MILLISECONDS, cb)
 
 /**
  * Runs a [cb] in a background thread, and returns its result as a future.
