@@ -1,14 +1,11 @@
 package net.justmachinery.futility.mechanisms
 
 import mu.KLogging
-import net.justmachinery.futility.CleanerWatcher
 import net.justmachinery.futility.execution.periodically
 import net.justmachinery.futility.globalCleaner
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A lock that needs to "refresh" itself before a failsafe release period elapses.

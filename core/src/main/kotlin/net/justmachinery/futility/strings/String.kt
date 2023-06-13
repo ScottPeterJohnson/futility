@@ -8,7 +8,7 @@ public fun String.hashCodeLong(): Long {
     val len = this.length
 
     for (i in 0 until len) {
-        h = 31 * h + this[i].toLong()
+        h = 31 * h + this[i].code.toLong()
     }
     return h
 }

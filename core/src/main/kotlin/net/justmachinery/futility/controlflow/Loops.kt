@@ -50,7 +50,7 @@ public fun <T> conditionalRepeat(
 }
 public class ConditionalRepeatContext<T>(private val maximumAttempts : Int?) {
     public var iteration : Int = 0
-    public val repeat: ConditionalRepeat.Repeat<T> = ConditionalRepeat.Repeat<T>()
+    public val repeat: ConditionalRepeat.Repeat<T> = ConditionalRepeat.Repeat()
     public fun done(value : T): ConditionalRepeat.Done<T> = ConditionalRepeat.Done(value)
     public val isLastRepeat : Boolean get() = maximumAttempts != null && iteration >= maximumAttempts - 1
 }
@@ -74,7 +74,7 @@ public fun <T> repeatOnThrow(
     cb: () -> T
 ) : T {
     var lastError : Throwable? = null
-    val result = conditionalRepeat<T>(maximumAttempts = maximumAttempts, maxBackoffWait = maxBackoffWait){
+    val result = conditionalRepeat(maximumAttempts = maximumAttempts, maxBackoffWait = maxBackoffWait){
         try {
             done(cb())
         } catch(t : Throwable){

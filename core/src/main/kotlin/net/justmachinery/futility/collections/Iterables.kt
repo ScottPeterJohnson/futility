@@ -12,7 +12,7 @@ internal fun <T> Iterable<T>.collectionSizeOrDefault2(default: Int): Int = if (t
 /**
  * Returns receiver split into chunks of less than or equal to desiredWeight (or at least one item).
  */
-public fun <T> Iterable<T>.chunkedBy(desiredWeight : Long, weigher : (T)->Long): Sequence<List<T>> = sequence<List<T>> {
+public fun <T> Iterable<T>.chunkedBy(desiredWeight : Long, weigher : (T)->Long): Sequence<List<T>> = sequence {
     var current = mutableListOf<T>()
     var currentWeight = 0L
     for(i in this@chunkedBy){

@@ -2,7 +2,6 @@ package net.justmachinery.futility.streams
 
 import mu.KLogging
 import net.justmachinery.futility.CleanerWatcher
-import net.justmachinery.futility.globalCleaner
 import java.io.InputStream
 import java.io.OutputStream
 

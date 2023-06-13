@@ -38,17 +38,19 @@ public inline fun <T> swallowExceptions(message : String = "Swallowed", logger :
 /**
  * Run [cb], catching and logging any exceptions generated
  */
-public inline fun <T> swallowExceptions(crossinline message : ()->String, logger : KLogger = SwallowedExceptions.logger, cb : ()->T) : T? {
+public inline fun <T> swallowExceptions(message : ()->String, logger : KLogger = SwallowedExceptions.logger, cb : ()->T) : T? {
     return try {
         cb()
     } catch(e : Throwable){
-        logger.error(e) { message() }
+        if(logger.isErrorEnabled){
+            logger.error(try { message() } catch(t : Throwable){ "Generating log message failed: $t" }, e)
+        }
         null
     }
 }
 
 /**
- * Run each [cb] to completion and rethrow if any threw an exception
+ * Run each [cbs] to completion and rethrow if any threw an exception
  */
 public fun exceptionIndependent(vararg cbs : ()->Unit){
     val exceptions = mutableListOf<Throwable>()

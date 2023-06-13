@@ -1,3 +1,5 @@
+package net.justmachinery.futility.streams
+
 import net.justmachinery.futility.streams.OverrideOutputStream
 import java.io.OutputStream
 

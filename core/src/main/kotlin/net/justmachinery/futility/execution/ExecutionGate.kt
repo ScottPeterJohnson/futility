@@ -38,7 +38,6 @@ public class ExecutionGate<T> {
         }
         try {
             waiting?.forEach { cb ->
-                @Suppress("UNCHECKED_CAST")
                 cb(value)
             }
         } finally {

@@ -6,11 +6,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.nio.charset.Charset
-import kotlin.reflect.KClass
 
 
 public fun ByteArray.interpretAsString(charset: Charset = Charsets.UTF_8): String = this.toString(charset)
@@ -65,8 +63,8 @@ public fun String.asHexBytes() : ByteArray {
     require(length % 2 == 0)
     val bytes = ByteArray(length / 2)
     for (i in (0 until length).step(2)){
-        val upper = hexValue[this[i].toUpperCase()]!!
-        val lower = hexValue[this[i+1].toUpperCase()]!!
+        val upper = hexValue[this[i].uppercaseChar()]!!
+        val lower = hexValue[this[i+1].uppercaseChar()]!!
         bytes[i/2] = (upper * 16 + lower).toByte()
     }
     return bytes

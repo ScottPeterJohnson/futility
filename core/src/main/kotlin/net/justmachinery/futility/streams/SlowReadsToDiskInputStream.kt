@@ -29,8 +29,7 @@ public class SlowReadsToDiskInputStream(
     private val maxBufferWaitMillis : Int = 4000
 ) : InputStream(){
     private val maxBufferedChunks get() = maxMemoryBuffer / chunkSize
-    private companion object : KLogging() {
-    }
+    private companion object : KLogging()
     private sealed class MemoryBuffer {
         class MemoryBytes(val bytes : ByteArray) : MemoryBuffer()
         object Done : MemoryBuffer()

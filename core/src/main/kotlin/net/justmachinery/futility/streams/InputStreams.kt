@@ -1,11 +1,8 @@
 package net.justmachinery.futility.streams
 
-import mu.KLogging
 import net.justmachinery.futility.execution.runThread
-import net.justmachinery.futility.globalCleaner
 import okio.Buffer
 import java.io.*
-import java.lang.ref.Cleaner
 
 public fun InputStream.readToString(): String = this.readAllBytes().toString(Charsets.UTF_8)
 public fun InputStream.readToStringAndClose(): String = use { readToString() }
@@ -127,6 +124,7 @@ private class ErrorPropagatingPipedInputStream : InputStream() {
     override fun read(b: ByteArray): Int = convertThrow { pipe.read(b) }
     override fun read(b: ByteArray, off: Int, len: Int) = convertThrow { pipe.read(b, off, len) }
     override fun readAllBytes() = convertThrow { pipe.readAllBytes()!! }
+    @Deprecated("Deprecated in Java")
     override fun skip(n: Long) = convertThrow { pipe.skip(n) }
     override fun readNBytes(b: ByteArray?, off: Int, len: Int) = convertThrow { pipe.readNBytes(b, off, len) }
     override fun available() = convertThrow { pipe.available() }

@@ -1,8 +1,6 @@
 package net.justmachinery.futility
 
 import mu.KLogging
-import java.io.Closeable
-import java.lang.RuntimeException
 import java.lang.ref.Cleaner
 
 /**
