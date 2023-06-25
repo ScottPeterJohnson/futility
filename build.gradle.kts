@@ -11,7 +11,7 @@ plugins {
 }
 
 allprojects {
-    version = "1.0.4"
+    version = "1.0.5"
     group = "net.justmachinery.futility"
 
 
@@ -94,16 +94,9 @@ subprojects {
 
     kotlin {
         explicitApi()
+        jvmToolchain(12)
     }
 
-    val compileKotlin : KotlinCompile by tasks
-    compileKotlin.kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-    val compileTestKotlin : KotlinCompile by tasks
-    compileTestKotlin.kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
         implementation("io.github.microutils:kotlin-logging:3.0.5")

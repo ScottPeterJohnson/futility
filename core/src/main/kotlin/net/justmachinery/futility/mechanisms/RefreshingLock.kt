@@ -2,9 +2,10 @@ package net.justmachinery.futility.mechanisms
 
 import mu.KLogging
 import net.justmachinery.futility.execution.periodically
-import net.justmachinery.futility.globalCleaner
+import java.lang.ref.WeakReference
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
@@ -13,49 +14,45 @@ import java.util.concurrent.TimeUnit
  * @param refreshCb Refresh whatever backs this lock; if [until] is null, then it should clear the lock.
  */
 public class RefreshingLock(
-    refreshCb : (until : Instant?)->Unit,
-    failsafeReleaseAfter : Duration = DEFAULT_FAILSAFE_RELEASE_AFTER
+    private val refreshCb : (until : Instant?)->Unit,
+    private val failsafeReleaseAfter : Duration = DEFAULT_FAILSAFE_RELEASE_AFTER
 ){
     private companion object : KLogging() {
         val DEFAULT_FAILSAFE_RELEASE_AFTER = Duration.ofMinutes(5)!!
     }
-    private val implementation = Implementation(refreshCb, failsafeReleaseAfter)
+
+
+    private var wasClosed = false
+
+    private val lock : ScheduledFuture<*>
+
     init {
-        val impl = implementation
-        globalCleaner.register(this){
-            if(!impl.wasClosed){
-                logger.error { "Refreshing lock was not properly closed" }
-                impl.release()
-            }
-        }
+        val refreshAfter = failsafeReleaseAfter.dividedBy(2)!!
+        val refresh = RefreshingLockRefresh(
+            lock = WeakReference(this),
+        )
+        lock = periodically(
+            initial = refreshAfter.toMinutes(),
+            delay = refreshAfter.toMinutes(),
+            timeUnit = TimeUnit.MINUTES,
+            cb = refresh::doRefresh
+        )
     }
 
-    //Do not capture the outer lock; allow garbage collection
-    private class Implementation(private val refreshCb : (until : Instant?)->Unit,
-                                 private val failsafeReleaseAfter : Duration = DEFAULT_FAILSAFE_RELEASE_AFTER
+    private class RefreshingLockRefresh(
+        private val lock : WeakReference<RefreshingLock>
     ){
-        var wasClosed = false
-        private val refreshAfter = failsafeReleaseAfter.dividedBy(2)!!
-
-        private val lock = periodically(refreshAfter.toMinutes(), refreshAfter.toMinutes(), TimeUnit.MINUTES){
-            synchronized(this){
-                if(!wasClosed){
-                    refreshCb(Instant.now().plus(failsafeReleaseAfter))
+        fun doRefresh(){
+            val refreshingLock = lock.get()
+            if(refreshingLock == null){
+                logger.warn { "RefreshingLock was not closed properly" }
+            } else {
+                synchronized(refreshingLock){
+                    if(!refreshingLock.wasClosed){
+                        refreshingLock.refreshCb(Instant.now().plus(refreshingLock.failsafeReleaseAfter))
+                    }
                 }
             }
-        }
-
-        fun release(){
-            cancelRefresh()
-            synchronized(this){
-                refreshCb(null)
-            }
-        }
-
-
-        fun cancelRefresh(){
-            wasClosed = true
-            lock.cancel(false)
         }
     }
 
@@ -63,13 +60,17 @@ public class RefreshingLock(
      * Cancel refresh, release lock.
      */
     public fun release(){
-        implementation.release()
+        cancelRefresh()
+        synchronized(this){
+            refreshCb(null)
+        }
     }
 
     /**
      * Cancel refresh, keep lock (until it expires).
      */
     public fun cancelRefresh(){
-        implementation.cancelRefresh()
+        wasClosed = true
+        lock.cancel(false)
     }
 }
