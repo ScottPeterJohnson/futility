@@ -1,7 +1,9 @@
 package net.justmachinery.futility.streams
 
+import kotlinx.io.Buffer
+import kotlinx.io.asInputStream
+import kotlinx.io.asOutputStream
 import net.justmachinery.futility.execution.runThread
-import okio.Buffer
 import java.io.*
 
 public fun InputStream.readToString(): String = this.readAllBytes().toString(Charsets.UTF_8)
@@ -45,8 +47,8 @@ public fun InputStream.wrap(
 ) : InputStream {
     var inputExhausted = false
     val buffer = Buffer()
-    val bufferInput = buffer.inputStream()
-    val pipeOut = chain(buffer.outputStream())
+    val bufferInput = buffer.asInputStream()
+    val pipeOut = chain(buffer.asOutputStream())
     return object : InputStream() {
         private fun check(num : Int){
             if(inputExhausted){ return }

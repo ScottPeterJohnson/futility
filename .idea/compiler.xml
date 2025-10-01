@@ -3,4 +3,11 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="12" />
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="futility.core" options="-proc:none" />
+      <module name="futility.core.main" options="-proc:none" />
+      <module name="futility.core.test" options="-proc:none" />
+    </option>
+  </component>
 </project>

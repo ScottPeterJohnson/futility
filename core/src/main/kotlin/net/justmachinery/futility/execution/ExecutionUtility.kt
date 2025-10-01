@@ -38,7 +38,7 @@ public interface ExecutionPools {
 public class DefaultPools(
 	private val coreDefaultPoolSize : Int = 10,
 	private val coreDefaultKeepAliveSeconds : Long = 15,
-	private val maxDefaultPoolSize : Int = (Runtime.getRuntime().maxMemory().coerceAtMost(256L.GiB) / 4 / 1.MiB).toInt(),
+	private val maxDefaultPoolSize : Int = (Runtime.getRuntime().maxMemory().coerceAtMost(256L.GiB) / 4 / 1.MiB).coerceAtLeast(1).toInt(),
 	private val shutdownHookPriority: ShutdownHookPriority? = ShutdownHookPriority.EXECUTOR_STOP_TASKS
 ) : ExecutionPools {
 	public override var schedulerService: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1, makeThreadFactory("scheduler")).apply {
@@ -63,7 +63,7 @@ public class DefaultPools(
 				} else {
 					throw RejectedExecutionException("Shutting down")
 				}
-			} catch (e: InterruptedException) {
+			} catch (_: InterruptedException) {
 				Thread.currentThread().interrupt()
 			}
 		}
@@ -124,13 +124,11 @@ public fun background(cb: () -> Unit) {
 /**
  * Executes [cb] after [delay]
  */
-public fun scheduled(delay : Duration, cb : ()->Unit) {
-	scheduled(delay.toMillis(), TimeUnit.MILLISECONDS, cb)
-}
+public fun scheduled(delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = scheduled(delay.toMillis(), TimeUnit.MILLISECONDS, cb)
 
-public fun scheduled(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) {
+public fun scheduled(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) : ScheduledFuture<*> {
 	val finalCb = withMdcLogErrors("In scheduled task", cb)
-	pools.schedulerService.schedule({ pools.defaultExecutor.execute(finalCb) }, delay, timeUnit)
+	return pools.schedulerService.schedule({ pools.defaultExecutor.execute(finalCb) }, delay, timeUnit)
 }
 
 
@@ -142,7 +140,10 @@ public fun periodically(initial : Long, delay : Long, timeUnit : TimeUnit, cb : 
 	val finalCb = withMdcLogErrors("In periodically scheduled task", cb)
 	return pools.schedulerService.scheduleWithFixedDelay({ pools.defaultExecutor.execute(finalCb) }, initial, delay, timeUnit)
 }
+public fun periodically(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) : ScheduledFuture<*> = periodically(delay, delay, timeUnit, cb)
+
 public fun periodically(initial : Duration, delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(initial.toMillis(), delay.toMillis(), TimeUnit.MILLISECONDS, cb)
+public fun periodically(delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(delay, delay, cb)
 
 /**
  * Runs a [cb] in a background thread, and returns its result as a future.

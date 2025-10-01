@@ -1,5 +1,7 @@
 package net.justmachinery.futility
 
+import kotlin.math.sqrt
+
 /**
  * Returns [this], unless [this] is outside of [Integer.MIN_VALUE] to [Integer.MAX_VALUE]; in which case returns the closest max.
  */
@@ -16,3 +18,9 @@ public fun Long.clampToInt() : Int {
  */
 public fun Long.divRoundUp(divisor : Long) : Long = (this + divisor - 1) / divisor
 public fun Int.divRoundUp(divisor : Int) : Int = (this + divisor - 1) / divisor
+
+
+public fun Int.squared() : Int = this * this
+public fun Long.squared() : Long = this * this
+public fun Double.sqrt() : Double = sqrt(this)
+public fun Float.sqrt() : Float = sqrt(this.toDouble()).toFloat()

@@ -1,8 +1,6 @@
 package net.justmachinery.futility
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -18,8 +16,6 @@ public fun UUID.toByteArray() : ByteArray {
     return bb.array()
 }
 
-@ExperimentalSerializationApi
-@Serializer(forClass = UUID::class)
 public object UUIDSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("d051e1ce-5bf8-48b1-ad2d-3bb4c54371b1"){
         element<Long>("hi")

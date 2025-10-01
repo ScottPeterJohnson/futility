@@ -8,3 +8,5 @@ public fun Duration.min(right : Duration) : Duration {
 public fun Duration.max(right : Duration) : Duration {
     return if(this >= right) this else right
 }
+
+public fun Duration.toSecondsDouble() : Double = seconds + nano / 1_000_000_000.0

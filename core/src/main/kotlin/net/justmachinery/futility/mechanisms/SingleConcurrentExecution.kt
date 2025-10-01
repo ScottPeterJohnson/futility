@@ -20,16 +20,8 @@ public class SingleConcurrentExecution(
     private var required = AtomicBoolean(false)
 
     public fun run(){
-        val toRun = synchronized(this){
-            required.set(true)
-            if(!running.get()){
-                running.set(true)
-                true
-            } else {
-                false
-            }
-        }
-        if(toRun){
+        required.set(true)
+        if(running.compareAndSet(false, true)){
             executionMethod(::runInternal)
         }
     }
@@ -37,23 +29,15 @@ public class SingleConcurrentExecution(
     private fun runInternal(){
         while(true){
             logger.trace { "Starting job" }
-            synchronized(this){
-                required.set(false)
-            }
-            try {
-                cb()
-            } catch(t : Throwable){
-                logger.error(t){ "While running single concurrent job" }
-            }
-            val shouldRunAgain = synchronized(this){
-                if(required.get()){
-                    true
-                } else {
-                    running.set(false)
-                    false
+            while(required.compareAndSet(true, false)){
+                try {
+                    cb()
+                } catch(t : Throwable){
+                    logger.error(t){ "While running single concurrent job" }
                 }
             }
-            if(shouldRunAgain){
+            running.set(false)
+            if(required.get() && running.compareAndSet(false, true)){
                 continue
             } else {
                 break
