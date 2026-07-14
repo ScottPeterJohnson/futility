@@ -24,4 +24,10 @@ public sealed class Maybe<T> {
             is Just<T> -> this.value
         }
     }
+    public inline fun or(value : ()->T) : T {
+        return when(this){
+            is Nothing -> value()
+            is Just<T> -> this.value
+        }
+    }
 }

@@ -1,6 +1,6 @@
 package net.justmachinery.futility
 
-import mu.KLogging
+import net.justmachinery.futility.logging.KLogging
 import java.lang.ref.Cleaner
 
 /**

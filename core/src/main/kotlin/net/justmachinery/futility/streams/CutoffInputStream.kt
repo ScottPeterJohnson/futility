@@ -12,30 +12,25 @@ public class CutoffInputStream(
     private val maxReadable: Long
 ) : InputStream() {
     private var total: Long = 0
+    private val remaining get() = maxReadable - total
 
-    private fun checkBefore(len : Int) : Int {
-        val maxReadable = min((maxReadable - total).clampToInt(), len)
-        if (maxReadable <= 0 && len != 0) {
-            throw InputStreamCutoffException()
-        }
-        return maxReadable
+    private fun hitLimitThrowIfMoreBytes() : Int {
+        if(input.read() == -1){ return -1 }
+        throw InputStreamCutoffException()
     }
-    private fun checkAfter(lenRead : Int){
-        if(lenRead >= 0){
-            total += lenRead
-        }
-    }
+
     override fun read(): Int {
-        checkBefore(1)
+        if(remaining <= 0){ return hitLimitThrowIfMoreBytes() }
         val i = input.read()
-        checkAfter(if(i >= 0) 1 else 0)
+        if(i >= 0){ total += 1 }
         return i
     }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {
-        val maxReadable = checkBefore(len)
-        val i = input.read(b, off, maxReadable)
-        checkAfter(i)
+        if(len == 0){ return 0 }
+        if(remaining <= 0){ return hitLimitThrowIfMoreBytes() }
+        val i = input.read(b, off, min(remaining.clampToInt(), len))
+        if(i > 0){ total += i }
         return i
     }
 

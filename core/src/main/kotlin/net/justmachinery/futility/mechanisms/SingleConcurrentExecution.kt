@@ -1,6 +1,6 @@
 package net.justmachinery.futility.mechanisms
 
-import mu.KLogging
+import net.justmachinery.futility.logging.KLogging
 import net.justmachinery.futility.controlflow.Wrapper
 import net.justmachinery.futility.execution.background
 import java.util.concurrent.atomic.AtomicBoolean

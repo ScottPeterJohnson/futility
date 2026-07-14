@@ -50,9 +50,8 @@ private class ParallelMapState<T, R>(
 ){
     val availableBufferSpace = Semaphore(maxBuffer ?: Int.MAX_VALUE, false)
     val futuresQueue = LinkedBlockingDeque<Optional<Future<R>>>() //Deque does not like nulls
-    var currentQueueNumber = 0
-    var hadException = false
-    var availableConcurrentFutures = AtomicInteger(0)
+    @Volatile var hadException = false
+    val availableConcurrentFutures = AtomicInteger(0)
 }
 
 private fun <T, R> Sequence<T>.parallelMapInternal(
@@ -92,7 +91,6 @@ private fun <T, R> Sequence<T>.parallelMapInternal(
                             result
                         }
                         parState.futuresQueue.add(Optional.of(future))
-                        parState.currentQueueNumber += 1
                     } else {
                         parState.futuresQueue.add(Optional.empty())
                     }

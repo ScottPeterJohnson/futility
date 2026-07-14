@@ -1,7 +1,7 @@
 package net.justmachinery.futility
 
-import mu.KLogger
-import mu.KLogging
+import io.github.oshai.kotlinlogging.KLogger
+import net.justmachinery.futility.logging.KLogging
 
 /**
  * Return null if [cb] throws any exception
@@ -42,8 +42,9 @@ public inline fun <T> swallowExceptions(message : ()->String, logger : KLogger =
     return try {
         cb()
     } catch(e : Throwable){
-        if(logger.isErrorEnabled){
-            logger.error(try { message() } catch(t : Throwable){ "Generating log message failed: $t" }, e)
+        if(logger.isErrorEnabled()){
+            val msg = try { message() } catch(t : Throwable){ "Generating log message failed: $t" }
+            logger.error(e) { msg }
         }
         null
     }

@@ -9,31 +9,11 @@ import java.io.*
 public fun InputStream.readToString(): String = this.readAllBytes().toString(Charsets.UTF_8)
 public fun InputStream.readToStringAndClose(): String = use { readToString() }
 public fun InputStream.readAllThenClose(): ByteArray = use { readAllBytes() }
-public fun InputStream.readExactByteArray(length : Int): ByteArray = ByteArray(length).also { if(this.read(it) != length) throw EOFException("End of stream") }
-/**
- * The default .skip on InputStreams is highly deficient and should never be used; use this instead.
- * Note this method is in Java 12.
- */
-public fun InputStream.skipExactBytes(number: Long) {
-    var leftToSkip = number
-    if (leftToSkip > 0) {
-        @Suppress("DEPRECATION") val ns: Long = skip(leftToSkip)
-        if (ns in 0 until leftToSkip) { // skipped too few bytes
-            // adjust number to skip
-            leftToSkip -= ns
-            // read until requested number skipped or EOS reached
-            while (leftToSkip > 0 && read() != -1) {
-                leftToSkip--
-            }
-            // if not enough skipped, then EOFE
-            if (leftToSkip != 0L) {
-                throw EOFException()
-            }
-        } else if (ns != leftToSkip) { // skipped negative or too many bytes
-            throw IOException("Unable to skip exactly")
-        }
-    }
-}
+//readNBytes rather than read: a single read() may legally return fewer bytes than requested mid-stream.
+public fun InputStream.readExactByteArray(length : Int): ByteArray = this.readNBytes(length).also { if(it.size != length) throw EOFException("End of stream") }
+
+@Deprecated("The JDK now provides this", ReplaceWith("this.skipNBytes(number)"))
+public fun InputStream.skipExactBytes(number: Long): Unit = this.skipNBytes(number)
 
 /**
  * Run InputStream through an output transformer to create a new input stream.

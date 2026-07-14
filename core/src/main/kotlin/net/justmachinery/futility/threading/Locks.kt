@@ -6,6 +6,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.time.toJavaDuration
 
 @OptIn(ExperimentalContracts::class)
 public inline fun <T> ReentrantReadWriteLock.read(timeout: Duration, action: () -> T) : T {
@@ -29,4 +30,16 @@ public inline fun <T> ReentrantReadWriteLock.write(timeout: Duration, action: ()
     } finally {
         rl.unlock()
     }
+}
+
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> ReentrantReadWriteLock.read(timeout: kotlin.time.Duration, action: () -> T) : T {
+    contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+    return read(timeout.toJavaDuration(), action)
+}
+
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> ReentrantReadWriteLock.write(timeout: kotlin.time.Duration, action: () -> T) : T {
+    contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+    return write(timeout.toJavaDuration(), action)
 }

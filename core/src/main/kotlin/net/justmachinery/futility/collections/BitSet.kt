@@ -3,24 +3,12 @@ package net.justmachinery.futility.collections
 import java.util.BitSet
 
 public inline fun BitSet.forEachTrue(cb : (Int)->Unit){
-    var i = 0
-    val size = size()
-    while(i<size){
-        if(get(i)){
-            cb(i)
-        }
-        i++
+    var i = nextSetBit(0)
+    while(i >= 0){
+        cb(i)
+        if(i == Int.MAX_VALUE){ break }
+        i = nextSetBit(i + 1)
     }
 }
 
-public fun BitSet.lowestSet() : Int? {
-    var i = 0
-    val size = size()
-    while(i<size){
-        if(get(i)){
-            return i
-        }
-        i++
-    }
-    return null
-}
+public fun BitSet.lowestSet() : Int? = nextSetBit(0).takeIf { it >= 0 }

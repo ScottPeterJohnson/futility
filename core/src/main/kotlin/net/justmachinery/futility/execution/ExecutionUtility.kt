@@ -1,7 +1,7 @@
 package net.justmachinery.futility.execution
 
 import kotlinx.coroutines.*
-import mu.KLogging
+import net.justmachinery.futility.logging.KLogging
 import net.justmachinery.futility.bytes.GiB
 import net.justmachinery.futility.bytes.MiB
 import net.justmachinery.futility.lazyMutable
@@ -125,6 +125,7 @@ public fun background(cb: () -> Unit) {
  * Executes [cb] after [delay]
  */
 public fun scheduled(delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = scheduled(delay.toMillis(), TimeUnit.MILLISECONDS, cb)
+public fun scheduled(delay : kotlin.time.Duration, cb : ()->Unit) : ScheduledFuture<*> = scheduled(delay.inWholeMilliseconds, TimeUnit.MILLISECONDS, cb)
 
 public fun scheduled(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) : ScheduledFuture<*> {
 	val finalCb = withMdcLogErrors("In scheduled task", cb)
@@ -144,6 +145,9 @@ public fun periodically(delay : Long, timeUnit : TimeUnit, cb : ()->Unit) : Sche
 
 public fun periodically(initial : Duration, delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(initial.toMillis(), delay.toMillis(), TimeUnit.MILLISECONDS, cb)
 public fun periodically(delay : Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(delay, delay, cb)
+
+public fun periodically(initial : kotlin.time.Duration, delay : kotlin.time.Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(initial.inWholeMilliseconds, delay.inWholeMilliseconds, TimeUnit.MILLISECONDS, cb)
+public fun periodically(delay : kotlin.time.Duration, cb : ()->Unit) : ScheduledFuture<*> = periodically(delay, delay, cb)
 
 /**
  * Runs a [cb] in a background thread, and returns its result as a future.

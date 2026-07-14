@@ -1,6 +1,6 @@
 package net.justmachinery.futility.streams
 
-import mu.KLogging
+import net.justmachinery.futility.logging.KLogging
 import net.justmachinery.futility.bytes.KiB
 import net.justmachinery.futility.execution.runThread
 import net.justmachinery.futility.swallowExceptions
@@ -10,6 +10,7 @@ import java.io.SequenceInputStream
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -43,7 +44,10 @@ public class SlowReadsToDiskInputStream(
         data class Exception(val throwable : Throwable) : FinalResult()
     }
 
-    private val memoryBuffer = LinkedBlockingQueue<MemoryBuffer>(maxBufferedChunks)
+    //Capacity is enforced by this semaphore rather than by bounding the queue itself, so that the Done marker
+    //can always be enqueued immediately even when the buffer is full of data chunks.
+    private val availableBufferSpace = Semaphore(maxBufferedChunks)
+    private val memoryBuffer = LinkedBlockingQueue<MemoryBuffer>()
     private val diskBuffer = LinkedBlockingQueue<DiskBuffer>()
     private val finalResult = LinkedBlockingQueue<FinalResult>()
     private val tempFile = lazy { Files.createTempFile("tmp", "slowinpcache") }
@@ -65,9 +69,10 @@ public class SlowReadsToDiskInputStream(
                 gaveFirst = true
                 return nullInputStream()
             }
-            if(!memoryDone){
+            while(!memoryDone){
                 when(val buffered = memoryBuffer.take()){
                     is MemoryBuffer.MemoryBytes -> {
+                        availableBufferSpace.release()
                         return buffered.bytes.inputStream()
                     }
                     is MemoryBuffer.Done -> {
@@ -75,11 +80,10 @@ public class SlowReadsToDiskInputStream(
                     }
                 }
             }
-            if(!diskDone){
+            while(!diskDone){
                 when(val buffered = diskBuffer.take()){
                     is DiskBuffer.DiskBytes -> {
-                        val bytes = fileInput.value.readNBytes(buffered.count)
-                        bytes.inputStream()
+                        return fileInput.value.readNBytes(buffered.count).inputStream()
                     }
                     is DiskBuffer.Done -> {
                         diskDone = true
@@ -108,33 +112,29 @@ public class SlowReadsToDiskInputStream(
                     if(buf.isEmpty()){
                         break
                     }
-                    val added : Boolean
+                    val acquired : Boolean
                     val elapsed = measureTimeMillis {
-                        added = memoryBuffer.offer(
-                            MemoryBuffer.MemoryBytes(buf),
+                        acquired = availableBufferSpace.tryAcquire(
                             (maxBufferWaitMillis - totalWaitTime).coerceAtLeast(0),
                             TimeUnit.MILLISECONDS
                         )
                     }
                     totalWaitTime += elapsed
-                    if(!added){
+                    if(acquired){
+                        memoryBuffer.put(MemoryBuffer.MemoryBytes(buf))
+                    } else {
                         memoryOverflow = buf
                         break
                     }
                 }
-                //Since the buffer might be full (and it'd be a pain to do this otherwise), we'll tamper with the
-                //queue to increase its capacity by 1.
-                memoryBuffer.javaClass.getDeclaredField("capacity").also {
-                    it.isAccessible = true
-                }.set(memoryBuffer, maxBufferedChunks + 1)
-                memoryBuffer.offer(MemoryBuffer.Done)
+                memoryBuffer.put(MemoryBuffer.Done)
 
                 if(memoryOverflow != null){
                     logger.warn { "Filled buffer, shunting to disk" }
                     tempFile.value.toFile().outputStream().use { out ->
                         val buffer = ByteArray(chunkSize)
-                        memoryOverflow!!.copyInto(buffer)
-                        var bytes = memoryOverflow!!.size
+                        memoryOverflow.copyInto(buffer)
+                        var bytes = memoryOverflow.size
                         while (true) {
                             out.write(buffer, 0, bytes)
                             out.flush()

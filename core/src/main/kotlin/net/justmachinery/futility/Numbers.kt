@@ -16,8 +16,8 @@ public fun Long.clampToInt() : Int {
 /**
  * Divides [this] by [divisor], rounding up if there is any remainder.
  */
-public fun Long.divRoundUp(divisor : Long) : Long = (this + divisor - 1) / divisor
-public fun Int.divRoundUp(divisor : Int) : Int = (this + divisor - 1) / divisor
+public fun Long.divRoundUp(divisor : Long) : Long = Math.ceilDiv(this, divisor)
+public fun Int.divRoundUp(divisor : Int) : Int = Math.ceilDiv(this, divisor)
 
 
 public fun Int.squared() : Int = this * this

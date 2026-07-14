@@ -1,9 +1,17 @@
 package net.justmachinery.futility.logging
 
-import mu.KLogger
+import io.github.oshai.kotlinlogging.KLoggable
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.Level
 import org.slf4j.MDC
-import org.slf4j.event.Level
 
+/**
+ * Did you like the KLogging declaration style? Do you not like deprecation warnings? This is for you.
+ */
+@Suppress("DEPRECATION")
+public open class KLogging : KLoggable {
+    override val logger: KLogger = logger()
+}
 
 public interface MdcLoggable {
     public val mdc : Sequence<MdcPair>
@@ -51,21 +59,8 @@ public inline fun <T> withLoggingInfo(values : Iterable<MdcLoggable>, body: () -
 public inline fun <T> withLoggingInfo(vararg pair: MdcLoggable, body: () -> T): T = withLoggingInfo(pair.asSequence(), body)
 
 public fun KLogger.logAt(level : Level, message : String, throwable: Throwable?){
-    if(throwable != null){
-        when(level){
-            Level.ERROR -> error(message, throwable)
-            Level.WARN -> warn(message, throwable)
-            Level.INFO -> info(message, throwable)
-            Level.DEBUG -> debug(message, throwable)
-            Level.TRACE -> trace(message, throwable)
-        }
-    } else {
-        when(level){
-            Level.ERROR -> error(message)
-            Level.WARN -> warn(message)
-            Level.INFO -> info(message)
-            Level.DEBUG -> debug(message)
-            Level.TRACE -> trace(message)
-        }
+    at(level){
+        this.message = message
+        this.cause = throwable
     }
 }

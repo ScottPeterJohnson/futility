@@ -48,11 +48,54 @@ public fun <T> Iterable<T>.headTail() : Pair<T, List<T>> = first() to drop(1)
 
 public fun <T, R> Iterable<T>.partitionByMapNotNull(map : (T)->R?) : Pair<Sequence<T>, Sequence<R>> = this.asSequence().partitionByMapNotNull(map)
 
-public fun <T> MutableIterable<T>.removeForEach(cb : (T)->Unit){
+public fun <T> MutableIterable<T>.forEachRemove(cb : (T)->Unit){
     val iterator = iterator()
     while(iterator.hasNext()){
         val next = iterator.next()
         iterator.remove()
         cb(next)
     }
+}
+
+/**
+ * Iterates this collection, removing each element for which [cb] returns true.
+ */
+public inline fun <T> MutableIterable<T>.forEachRemoveIf(cb : (T)->Boolean){
+    val iterator = iterator()
+    while(iterator.hasNext()){
+        if(cb(iterator.next())){
+            iterator.remove()
+        }
+    }
+}
+
+/** Returns the next element, or null if there are none remaining. */
+public fun <T> Iterator<T>.nextOrNull() : T? = if(hasNext()) next() else null
+
+/**
+ * Returns a new list with elements shifted [amount] positions towards the front, wrapping around.
+ * [amount] is taken modulo the list size, so amounts larger than the size (and empty lists) are handled gracefully.
+ */
+public fun <T> Collection<T>.rotateLeft(amount : Int) : List<T> = toMutableList().apply { rotateLeftMut(amount) }
+
+/**
+ * Returns a new list with elements shifted [amount] positions towards the back, wrapping around.
+ * [amount] is taken modulo the list size, so amounts larger than the size (and empty lists) are handled gracefully.
+ */
+public fun <T> Collection<T>.rotateRight(amount : Int) : List<T> = toMutableList().apply { rotateRightMut(amount) }
+
+/**
+ * Shifts the elements of this list [amount] positions towards the front in place, wrapping around.
+ * [amount] is taken modulo the list size, so amounts larger than the size (and empty lists) are handled gracefully.
+ */
+public fun <T> MutableList<T>.rotateLeftMut(amount : Int) {
+    java.util.Collections.rotate(this, -amount)
+}
+
+/**
+ * Shifts the elements of this list [amount] positions towards the back in place, wrapping around.
+ * [amount] is taken modulo the list size, so amounts larger than the size (and empty lists) are handled gracefully.
+ */
+public fun <T> MutableList<T>.rotateRightMut(amount : Int) {
+    java.util.Collections.rotate(this, amount)
 }

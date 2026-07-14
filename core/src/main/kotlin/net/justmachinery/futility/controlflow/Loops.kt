@@ -2,6 +2,7 @@ package net.justmachinery.futility.controlflow
 
 
 import kotlin.math.min
+import kotlin.random.Random
 
 /**
  * Repeatedly calls [cb] until it returns a non-null value.
@@ -20,11 +21,14 @@ public fun <T> repeatUntilNotNull(cb : (Int)->T?) : T {
 /**
  * Calls [cb] up to [maximumAttempts] times, with an exponential thread sleep of up to [maxBackoffWait] ms between attempts.
  * If [cb] returns done(value), return value. If [cb] returns [repeat], then loop again.
+ * With [jitter] (default), each sleep is a uniform random duration between half the current backoff and all of it,
+ * to avoid thundering herds of simultaneous retries.
  */
 public fun <T> conditionalRepeat(
     maximumAttempts : Int? = null,
     initialWait : Long = 100L,
     maxBackoffWait : Long = 0L,
+    jitter : Boolean = true,
     cb : ConditionalRepeatContext<T>.()->ConditionalRepeat<T>
 ) : T? {
     val context = ConditionalRepeatContext<T>(maximumAttempts)
@@ -37,7 +41,9 @@ public fun <T> conditionalRepeat(
                     return null
                 }
                 if(maxBackoffWait != 0L){
-                    Thread.sleep(backoff)
+                    Thread.sleep(if(jitter) {
+                        backoff / 2 + Random.nextLong(backoff / 2 + 1)
+                    } else backoff)
                     backoff *= 2
                     backoff = min(backoff, maxBackoffWait)
                 }

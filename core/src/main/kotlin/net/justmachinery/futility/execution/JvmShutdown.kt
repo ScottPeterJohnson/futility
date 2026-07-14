@@ -3,7 +3,7 @@
  */
 package net.justmachinery.futility.execution
 
-import mu.KLogging
+import net.justmachinery.futility.logging.KLogging
 import net.justmachinery.futility.swallowExceptions
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,7 +47,7 @@ private data class ShutdownHook(var hasRun : AtomicBoolean, val cb : ()->Unit, v
 private val shutdownHooks = PriorityBlockingQueue<ShutdownHook>(1) { left, right -> left.priority.compareTo(right.priority) }.apply {
     val logger = Shutdown.logger //This is here to escape unusual shutdown classloading issues
     Runtime.getRuntime().addShutdownHook(Thread {
-        logger.info("Calling JVM Shutdown hooks")
+        logger.info { "Calling JVM Shutdown hooks" }
         runShutdownHooks()
     })
 }

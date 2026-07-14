@@ -1,12 +1,13 @@
 package net.justmachinery.futility.mechanisms
 
-import mu.KLogging
+import net.justmachinery.futility.logging.KLogging
 import net.justmachinery.futility.execution.periodically
 import java.lang.ref.WeakReference
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import kotlin.time.toJavaDuration
+import kotlin.time.toKotlinInstant
 
 /**
  * A lock that needs to "refresh" itself before a failsafe release period elapses.
@@ -21,20 +22,25 @@ public class RefreshingLock(
         val DEFAULT_FAILSAFE_RELEASE_AFTER = Duration.ofMinutes(5)!!
     }
 
+    public constructor(
+        refreshCb : (until : kotlin.time.Instant?)->Unit,
+        failsafeReleaseAfter : kotlin.time.Duration
+    ) : this({ refreshCb(it?.toKotlinInstant()) }, failsafeReleaseAfter.toJavaDuration())
+
 
     private var wasClosed = false
 
     private val lock : ScheduledFuture<*>
 
     init {
+        require(!failsafeReleaseAfter.isNegative && !failsafeReleaseAfter.isZero){ "failsafeReleaseAfter must be positive" }
         val refreshAfter = failsafeReleaseAfter.dividedBy(2)!!
         val refresh = RefreshingLockRefresh(
             lock = WeakReference(this),
         )
         lock = periodically(
-            initial = refreshAfter.toMinutes(),
-            delay = refreshAfter.toMinutes(),
-            timeUnit = TimeUnit.MINUTES,
+            initial = refreshAfter,
+            delay = refreshAfter,
             cb = refresh::doRefresh
         )
     }

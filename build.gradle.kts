@@ -5,14 +5,14 @@ plugins {
     `java-gradle-plugin`
     `maven-publish`
     signing
-    val kotlinVersion = "2.2.20"
+    val kotlinVersion = "2.4.0"
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.serialization").version(kotlinVersion)
-    id("com.github.ben-manes.versions").version("0.47.0")  //For finding outdated dependencies
+    id("com.github.ben-manes.versions").version("0.54.0")  //For finding outdated dependencies
 }
 
 allprojects {
-    version = "1.0.6"
+    version = "1.1.0"
     group = "net.justmachinery.futility"
 
 
@@ -95,22 +95,33 @@ subprojects {
 
 
     java {
-        targetCompatibility = JavaVersion.VERSION_12
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlin {
         explicitApi()
         jvmToolchain(25)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_12)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation("io.github.microutils:kotlin-logging:3.0.5")
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-        implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
+        implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
+        implementation("org.slf4j:slf4j-api:2.0.17")
+        api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
+
+        testImplementation(kotlin("test"))
+        testImplementation(platform("org.junit:junit-bom:5.13.4"))
+        testImplementation("org.junit.jupiter:junit-jupiter")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+        testRuntimeOnly("org.slf4j:slf4j-simple:2.0.17")
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
     }
 }

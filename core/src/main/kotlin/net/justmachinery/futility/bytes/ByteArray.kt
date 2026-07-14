@@ -9,6 +9,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.nio.charset.Charset
+import java.util.HexFormat
 
 
 public fun ByteArray.interpretAsString(charset: Charset = Charsets.UTF_8): String = this.toString(charset)
@@ -47,25 +48,8 @@ public object ByteArrayWrapperSerializer : KSerializer<ByteArrayWrapper> {
     }
 }
 
-private val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
-public fun ByteArray.toHex(): String {
-    val hexChars = CharArray(size * 2)
-    for (j in indices) {
-        val v = this[j].toInt() and 0xFF
-        hexChars[j * 2] = HEX_ARRAY[v.ushr(4)]
-        hexChars[j * 2 + 1] = HEX_ARRAY[v and 0x0F]
-    }
-    return String(hexChars)
-}
+private val upperHex = HexFormat.of().withUpperCase()
+public fun ByteArray.toHex(): String = upperHex.formatHex(this)
 
-private val hexValue = HEX_ARRAY.withIndex().associateBy({ it.value }, { it.index })
-public fun String.asHexBytes() : ByteArray {
-    require(length % 2 == 0)
-    val bytes = ByteArray(length / 2)
-    for (i in (0 until length).step(2)){
-        val upper = hexValue[this[i].uppercaseChar()]!!
-        val lower = hexValue[this[i+1].uppercaseChar()]!!
-        bytes[i/2] = (upper * 16 + lower).toByte()
-    }
-    return bytes
-}
+//Accepts both upper and lower case digits.
+public fun String.asHexBytes() : ByteArray = HexFormat.of().parseHex(this)
