@@ -1,14 +1,12 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    `java-gradle-plugin`
-    `maven-publish`
-    signing
     val kotlinVersion = "2.4.0"
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.serialization").version(kotlinVersion)
     id("com.github.ben-manes.versions").version("0.54.0")  //For finding outdated dependencies
+    id("com.vanniktech.maven.publish").version("0.34.0").apply(false)
 }
 
 allprojects {
@@ -21,76 +19,42 @@ allprojects {
     }
 }
 subprojects {
-    apply(plugin = "org.gradle.maven-publish")
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.kapt")
-    apply(plugin = "org.gradle.signing")
     apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
-
-    val sourcesJar by tasks.registering(Jar::class){
-        archiveClassifier.set("sources")
-        from(sourceSets.main.get().allSource)
-    }
-    val javadocJar by tasks.registering(Jar::class){
-        dependsOn.add(JavaPlugin.JAVADOC_TASK_NAME)
-        archiveClassifier.set("javadoc")
-        from(tasks.getByName("javadoc"))
-    }
-
-    artifacts {
-        archives(sourcesJar)
-        archives(javadocJar)
-    }
+    apply(plugin = "com.vanniktech.maven.publish")
 
     val projectName = name
-    publishing {
-        publications {
-            create<MavenPublication>("mavenKotlin") {
-                artifactId = "futility-$projectName"
-                from(components["kotlin"])
-                pom {
-                    name.set("Futility $projectName")
-                    description.set("$description")
-                    url.set("https://github.com/ScottPeterJohnson/futility")
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("scottj")
-                            name.set("Scott Johnson")
-                            email.set("mavenfutility@justmachinery.net")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:git://github.com/ScottPeterJohnson/futility.git")
-                        developerConnection.set("scm:git:ssh://github.com/ScottPeterJohnson/futility.git")
-                        url.set("http://github.com/ScottPeterJohnson/futility")
-                    }
-                }
-                artifact(sourcesJar)
-                artifact(javadocJar)
-            }
-        }
-        repositories {
-            maven {
-                name = "central"
-                val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-                val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
-                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                credentials {
-                    username = findProperty("ossrhUsername") as? String
-                    password = findProperty("ossrhPassword") as? String
-                }
-            }
-        }
-    }
+    // Applied via apply(plugin = ...) inside subprojects, so the type-safe `mavenPublishing { }`
+    // accessor isn't available here; configure the extension by type instead.
+    configure<MavenPublishBaseExtension> {
+        publishToMavenCentral()
+        signAllPublications()
 
-    signing {
-        sign(publishing.publications["mavenKotlin"])
+        coordinates(groupId = group.toString(), artifactId = "futility-$projectName", version = version.toString())
+        pom {
+            name.set("Futility $projectName")
+            description.set(project.description)
+            url.set("https://github.com/ScottPeterJohnson/futility")
+            licenses {
+                license {
+                    name.set("The Apache License, Version 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                }
+            }
+            developers {
+                developer {
+                    id.set("scottj")
+                    name.set("Scott Johnson")
+                    email.set("mavenfutility@justmachinery.net")
+                }
+            }
+            scm {
+                connection.set("scm:git:git://github.com/ScottPeterJohnson/futility.git")
+                developerConnection.set("scm:git:ssh://github.com/ScottPeterJohnson/futility.git")
+                url.set("https://github.com/ScottPeterJohnson/futility")
+            }
+        }
     }
 
 
