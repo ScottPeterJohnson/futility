@@ -52,9 +52,26 @@ public typealias AdditiveWith<OtherUnit> = AdditiveWith1<OtherUnit>
 public typealias MultipliesTo<OtherUnit, ResultUnit> = MultipliesTo1<OtherUnit, ResultUnit>
 /** Units that, divided by [OtherUnit], produce [ResultUnit]. */
 public typealias DividesTo<OtherUnit, ResultUnit> = DividesTo1<OtherUnit, ResultUnit>
+/** Units that, divided by [OtherUnit], produce a plain (raw) number: a dimensionless ratio. */
+public typealias RawDividesTo<OtherUnit> = RawDividesTo1<OtherUnit>
 
 /*
- * Here are four extra slots defined for the above if you need them:
+ * Combinations of the above for common cases.
+ */
+/**
+ * A quantity like meters or bytes: adds to and subtracts from itself, scales by raw
+ * numbers, orders against itself, and divides by itself into a plain ratio.
+ */
+public interface Magnitude<Self> : AdditiveWith<Self>, RawScalable, Ordered, RawDividesTo<Self>
+
+/**
+ * A [Magnitude] that is already dimensionless, so multiplying two of them stays in the same unit: a
+ * scaling factor, a percentage.
+ */
+public interface Factor<Self> : Magnitude<Self>, MultipliesTo<Self, Self>
+
+/*
+ * Extra slots for unit operations if you need them:
  */
 
 public interface AdditiveWith1<OtherUnit>
@@ -71,3 +88,8 @@ public interface DividesTo1<OtherUnit, ResultUnit>
 public interface DividesTo2<OtherUnit, ResultUnit>
 public interface DividesTo3<OtherUnit, ResultUnit>
 public interface DividesTo4<OtherUnit, ResultUnit>
+
+public interface RawDividesTo1<OtherUnit>
+public interface RawDividesTo2<OtherUnit>
+public interface RawDividesTo3<OtherUnit>
+public interface RawDividesTo4<OtherUnit>

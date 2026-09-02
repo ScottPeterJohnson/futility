@@ -39,6 +39,11 @@ public fun Long.atLeast(other: Long): Long = coerceAtLeast(other)
 public fun Double.atLeast(other: Double): Double = coerceAtLeast(other)
 public fun Float.atLeast(other: Float): Float = coerceAtLeast(other)
 
+public fun Int.clamp(minimumValue : Int, maximumValue : Int) : Int = coerceIn(minimumValue, maximumValue)
+public fun Long.clamp(minimumValue: Long, maximumValue: Long): Long = coerceIn(minimumValue, maximumValue)
+public fun Double.clamp(minimumValue: Double, maximumValue: Double): Double = coerceIn(minimumValue, maximumValue)
+public fun Float.clamp(minimumValue: Float, maximumValue: Float): Float = coerceIn(minimumValue, maximumValue)
+
 /**
  * Whether [this] is within [tolerance] of [other], inclusive.
  */

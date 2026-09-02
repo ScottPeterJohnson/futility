@@ -43,11 +43,22 @@ private fun Primitive.operatorsFile() = """
 package net.justmachinery.futility.primitives
 
 import kotlin.math.abs
+import net.justmachinery.futility.atLeast
+import net.justmachinery.futility.atMost
+import net.justmachinery.futility.clamp
+import net.justmachinery.futility.isWithin
+import net.justmachinery.futility.squared
 ${emitIf(integer) { """
 import kotlin.math.ceil
 import kotlin.math.floor
+import net.justmachinery.futility.divRoundUp
 """ }}
+${emitIf(type == "Long") { """
+import net.justmachinery.futility.clampToInt
+""" }}
+${emitIf(type == "Float") { """
 import net.justmachinery.futility.collections.sumByFloat
+""" }}
 
 //Scaling by raw numbers
 public operator fun <Unit : RawScalable> $wrap<Unit>.times(scale : $type) : $wrap<Unit> = $wrap(raw * scale)
@@ -58,19 +69,24 @@ public operator fun <Unit : RawScalable> $wrap<Unit>.div(divisor : Int) : $wrap<
 """ }}
 ${emitIf(integer) { """
 public operator fun <Unit : RawScalable> $wrap<Unit>.rem(divisor : $type) : $wrap<Unit> = $wrap(raw % divisor)
+public fun <Unit : RawScalable> $wrap<Unit>.divRoundUp(divisor : $type) : $wrap<Unit> = $wrap(raw.divRoundUp(divisor))
 public fun <Unit : RawScalable> $wrap<Unit>.timesUp(scale : Double) : $wrap<Unit> = $wrap(ceil(raw * scale).to$type())
 public fun <Unit : RawScalable> $wrap<Unit>.timesDown(scale : Double) : $wrap<Unit> = $wrap(floor(raw * scale).to$type())
 """ }}
+${emitIf(type == "Long") { """
+public fun <Unit> LongWrapper<Unit>.clampToInt() : IntWrapper<Unit> = IntWrapper(raw.clampToInt())
+""" }}
 
-//Ordering
+//Ordering. These mirror the equivalents in Numbers.kt.
 public operator fun <Unit : Ordered> $wrap<Unit>.compareTo(other : $wrap<Unit>) : Int = raw.compareTo(other.raw)
-public fun <Unit : Ordered> $wrap<Unit>.min(other : $wrap<Unit>) : $wrap<Unit> = $wrap(minOf(raw, other.raw))
-public fun <Unit : Ordered> $wrap<Unit>.max(other : $wrap<Unit>) : $wrap<Unit> = $wrap(maxOf(raw, other.raw))
-public fun <Unit : Ordered> $wrap<Unit>.coerceIn(minimum : $wrap<Unit>, maximum : $wrap<Unit>) : $wrap<Unit> = $wrap(raw.coerceIn(minimum.raw, maximum.raw))
+public fun <Unit : Ordered> $wrap<Unit>.atMost(other : $wrap<Unit>) : $wrap<Unit> = $wrap(raw.atMost(other.raw))
+public fun <Unit : Ordered> $wrap<Unit>.atLeast(other : $wrap<Unit>) : $wrap<Unit> = $wrap(raw.atLeast(other.raw))
+public fun <Unit : Ordered> $wrap<Unit>.clamp(minimumValue : $wrap<Unit>, maximumValue : $wrap<Unit>) : $wrap<Unit> = $wrap(raw.clamp(minimumValue.raw, maximumValue.raw))
+public fun <Unit : Ordered> $wrap<Unit>.isWithin(other : $wrap<Unit>, tolerance : $wrap<Unit>) : Boolean = raw.isWithin(other.raw, tolerance.raw)
 public fun <Unit : Ordered> Iterable<$wrap<Unit>>.minOrNull() : $wrap<Unit>? = minByOrNull { it.raw }
 public fun <Unit : Ordered> Iterable<$wrap<Unit>>.maxOrNull() : $wrap<Unit>? = maxByOrNull { it.raw }
 ${(1..OPERATION_INTERFACE_COUNT).joinToString("") { """
-//Relations declared via AdditiveWith$it / MultipliesTo$it / DividesTo$it
+//Relational operators
 @JvmName("plus$it")
 public operator fun <Unit : AdditiveWith$it<OtherUnit>, OtherUnit> ${wrap}<Unit>.plus(other : ${wrap}<OtherUnit>) : ${wrap}<Unit> = ${wrap}(raw + other.raw)
 @JvmName("minus$it")
@@ -83,8 +99,12 @@ public fun <Unit : AdditiveWith$it<Unit>> ${wrap}<Unit>.abs() : ${wrap}<Unit> = 
 public fun <Unit : AdditiveWith$it<Unit>> Iterable<${wrap}<Unit>>.sum() : ${wrap}<Unit> = ${wrap}(${sumOfRaw})
 @JvmName("times$it")
 public operator fun <Unit : MultipliesTo$it<OtherUnit, ResultUnit>, OtherUnit, ResultUnit> ${wrap}<Unit>.times(other : ${wrap}<OtherUnit>) : ${wrap}<ResultUnit> = ${wrap}(raw * other.raw)
+@JvmName("squared$it")
+public fun <Unit : MultipliesTo$it<Unit, ResultUnit>, ResultUnit> ${wrap}<Unit>.squared() : ${wrap}<ResultUnit> = ${wrap}(raw.squared())
 @JvmName("div$it")
 public operator fun <Unit : DividesTo$it<OtherUnit, ResultUnit>, OtherUnit, ResultUnit> ${wrap}<Unit>.div(other : ${wrap}<OtherUnit>) : ${wrap}<ResultUnit> = ${wrap}(raw / other.raw)
+@JvmName("divRaw$it")
+public operator fun <Unit : RawDividesTo$it<OtherUnit>, OtherUnit> ${wrap}<Unit>.div(other : ${wrap}<OtherUnit>) : $type = raw / other.raw
 ${emitIf(!integer) { """
 @JvmName("lerp$it")
 public fun <Unit> lerp(from : ${wrap}<Unit>, to : ${wrap}<Unit>, fraction : ${type}) : ${wrap}<Unit>
