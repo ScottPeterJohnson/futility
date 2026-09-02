@@ -2,6 +2,8 @@ package net.justmachinery.futility
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class NumbersTest {
     @Test
@@ -44,5 +46,29 @@ class NumbersTest {
     fun sqrtComputesSquareRoot() {
         assertEquals(3.0, 9.0.sqrt(), 1e-9)
         assertEquals(2.0f, 4.0f.sqrt(), 1e-6f)
+    }
+
+    @Test
+    fun minAndMaxPickTheSmallerAndLarger() {
+        assertEquals(1, 1.min(2))
+        assertEquals(1, 2.min(1))
+        assertEquals(2, 1.max(2))
+        assertEquals(2, 2.max(1))
+
+        assertEquals(-1L, 1L.min(-1L))
+        assertEquals(1.0, 1.0.min(2.0), 1e-9)
+        assertEquals(2.0f, 1.0f.max(2.0f), 1e-6f)
+    }
+
+    @Test
+    fun isWithinComparesAgainstTheOtherValue() {
+        assertTrue(10.isWithin(12, 2))
+        assertTrue(14.isWithin(12, 2))
+        assertFalse(9.isWithin(12, 2))
+        assertFalse(15.isWithin(12, 2))
+
+        assertTrue(10L.isWithin(11L, 1L))
+        assertTrue(1.05.isWithin(1.0, 0.1))
+        assertFalse(1.05f.isWithin(1.0f, 0.01f))
     }
 }

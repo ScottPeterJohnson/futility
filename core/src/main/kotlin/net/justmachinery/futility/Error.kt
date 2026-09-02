@@ -1,5 +1,6 @@
 package net.justmachinery.futility
 
+@Deprecated("Use kotlin's Result<T>")
 public sealed class ErrorOr<T> {
     public data class Error<T>(val exception: Exception) : ErrorOr<T>()
     public data class Result<T>(val result : T) : ErrorOr<T>()
