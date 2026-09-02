@@ -36,8 +36,15 @@ public fun <T> Iterable<T>.chunkedBy(desiredWeight : Long, weigher : (T)->Long):
  */
 public inline fun <T, R> Iterable<T>.mapWithSideEffects(transform: (T) -> R): List<R> = this.map(transform)
 
-public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
-    var sum = 0L
+@Deprecated("Use sumOf {}")
+public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long) : Long = sumOf(selector)
+
+/**
+ * sumOf for floats.
+ * This is missing from the stdlib.
+ */
+public inline fun <T> Iterable<T>.sumByFloat(selector : (T) -> Float) : Float {
+    var sum = 0f
     for (element in this) {
         sum += selector(element)
     }

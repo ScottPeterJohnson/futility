@@ -29,15 +29,15 @@ public fun Float.squared(): Float = this * this
 public fun Double.sqrt() : Double = sqrt(this)
 public fun Float.sqrt() : Float = sqrt(this.toDouble()).toFloat()
 
-public fun Int.min(other : Int) : Int = coerceAtMost(other)
-public fun Long.min(other: Long): Long = coerceAtMost(other)
-public fun Double.min(other: Double): Double = coerceAtMost(other)
-public fun Float.min(other: Float): Float = coerceAtMost(other)
+public fun Int.atMost(other : Int) : Int = coerceAtMost(other)
+public fun Long.atMost(other: Long): Long = coerceAtMost(other)
+public fun Double.atMost(other: Double): Double = coerceAtMost(other)
+public fun Float.atMost(other: Float): Float = coerceAtMost(other)
 
-public fun Int.max(other : Int) : Int = coerceAtLeast(other)
-public fun Long.max(other: Long): Long = coerceAtLeast(other)
-public fun Double.max(other: Double): Double = coerceAtLeast(other)
-public fun Float.max(other: Float): Float = coerceAtLeast(other)
+public fun Int.atLeast(other : Int) : Int = coerceAtLeast(other)
+public fun Long.atLeast(other: Long): Long = coerceAtLeast(other)
+public fun Double.atLeast(other: Double): Double = coerceAtLeast(other)
+public fun Float.atLeast(other: Float): Float = coerceAtLeast(other)
 
 /**
  * Whether [this] is within [tolerance] of [other], inclusive.

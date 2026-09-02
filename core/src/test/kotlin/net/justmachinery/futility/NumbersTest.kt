@@ -50,14 +50,14 @@ class NumbersTest {
 
     @Test
     fun minAndMaxPickTheSmallerAndLarger() {
-        assertEquals(1, 1.min(2))
-        assertEquals(1, 2.min(1))
-        assertEquals(2, 1.max(2))
-        assertEquals(2, 2.max(1))
+        assertEquals(1, 1.atMost(2))
+        assertEquals(1, 2.atMost(1))
+        assertEquals(2, 1.atLeast(2))
+        assertEquals(2, 2.atLeast(1))
 
-        assertEquals(-1L, 1L.min(-1L))
-        assertEquals(1.0, 1.0.min(2.0), 1e-9)
-        assertEquals(2.0f, 1.0f.max(2.0f), 1e-6f)
+        assertEquals(-1L, 1L.atMost(-1L))
+        assertEquals(1.0, 1.0.atMost(2.0), 1e-9)
+        assertEquals(2.0f, 1.0f.atLeast(2.0f), 1e-6f)
     }
 
     @Test
