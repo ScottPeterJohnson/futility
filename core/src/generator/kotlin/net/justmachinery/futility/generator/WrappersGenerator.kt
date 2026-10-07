@@ -51,7 +51,7 @@ import net.justmachinery.futility.squared
 ${emitIf(integer) { """
 import kotlin.math.ceil
 import kotlin.math.floor
-import net.justmachinery.futility.divRoundUp
+import net.justmachinery.futility.ceilDiv
 """ }}
 ${emitIf(type == "Long") { """
 import net.justmachinery.futility.clampToInt
@@ -69,7 +69,9 @@ public operator fun <Unit : RawScalable> $wrap<Unit>.div(divisor : Int) : $wrap<
 """ }}
 ${emitIf(integer) { """
 public operator fun <Unit : RawScalable> $wrap<Unit>.rem(divisor : $type) : $wrap<Unit> = $wrap(raw % divisor)
-public fun <Unit : RawScalable> $wrap<Unit>.divRoundUp(divisor : $type) : $wrap<Unit> = $wrap(raw.divRoundUp(divisor))
+public fun <Unit : RawScalable> $wrap<Unit>.ceilDiv(divisor : $type) : $wrap<Unit> = $wrap(raw.ceilDiv(divisor))
+@Deprecated("Use ceilDiv", ReplaceWith("this.ceilDiv(divisor)"))
+public fun <Unit : RawScalable> $wrap<Unit>.divRoundUp(divisor : $type) : $wrap<Unit> = ceilDiv(divisor)
 public fun <Unit : RawScalable> $wrap<Unit>.timesUp(scale : Double) : $wrap<Unit> = $wrap(ceil(raw * scale).to$type())
 public fun <Unit : RawScalable> $wrap<Unit>.timesDown(scale : Double) : $wrap<Unit> = $wrap(floor(raw * scale).to$type())
 """ }}

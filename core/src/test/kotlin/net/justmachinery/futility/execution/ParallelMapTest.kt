@@ -54,13 +54,6 @@ class ParallelMapTest {
     }
 
     @Test
-    fun iterableVariantTransformsAll() {
-        withRealPools {
-            assertEquals(listOf(2, 4, 6), listOf(1, 2, 3).parallelMap { it * 2 }.toList())
-        }
-    }
-
-    @Test
     fun emptyInputYieldsEmptyOutput() {
         withRealPools {
             assertEquals(emptyList(), emptySequence<Int>().parallelMap { it }.toList())

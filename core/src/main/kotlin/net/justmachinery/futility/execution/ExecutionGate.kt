@@ -5,6 +5,7 @@ import java.lang.IllegalStateException
 /**
  * A queue that can be flushed exactly once with a value; it will call in order all callbacks waiting on it.
  * If it has already been completed, it will immediately call a callback that tries to wait on it.
+ * If a callback throws, the exception propagates out of [open] and the remaining callbacks are not called.
  */
 public class ExecutionGate<T> {
     private var waiting : MutableList<(T)->Unit>? = mutableListOf()
@@ -30,7 +31,7 @@ public class ExecutionGate<T> {
     public fun open(value : T){
         synchronized(this){
             if(haveValue){
-                throw IllegalStateException("FutureExecutionQueue was already completed with $value")
+                throw IllegalStateException("ExecutionGate was already opened with ${this.value}")
             } else {
                 haveValue = true
                 this.value = value

@@ -6,7 +6,10 @@ package net.justmachinery.futility
  * (This should really be in the standard library.)
  */
 public sealed class Maybe<T> {
-    public class Nothing<T> : Maybe<T>()
+    public class Nothing<T> : Maybe<T>() {
+        override fun equals(other: Any?): Boolean = other is Nothing<*>
+        override fun hashCode(): Int = 0
+    }
     public data class Just<T>(val value : T) : Maybe<T>()
 
     public fun justOrThrow(t : ()->Throwable) : T {

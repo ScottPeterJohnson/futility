@@ -10,14 +10,14 @@ public inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R): MutableLis
 internal fun <T> Iterable<T>.collectionSizeOrDefault2(default: Int): Int = if (this is Collection<*>) this.size else default
 
 /**
- * Returns receiver split into chunks of less than or equal to desiredWeight (or at least one item).
+ * Returns receiver split into chunks of less than or equal to desiredWeight (or at least having exactly one item).
  */
 public fun <T> Iterable<T>.chunkedBy(desiredWeight : Long, weigher : (T)->Long): Sequence<List<T>> = sequence {
     var current = mutableListOf<T>()
     var currentWeight = 0L
     for(i in this@chunkedBy){
         val weight = weigher(i)
-        if(currentWeight == 0L || currentWeight + weight <= desiredWeight){
+        if(current.isEmpty() || currentWeight + weight <= desiredWeight){
             current.add(i)
             currentWeight += weight
         } else {

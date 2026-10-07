@@ -14,13 +14,13 @@ public fun <T> lazyMutable(initializer: () -> T): LazyMutable<T> = LazyMutable(i
 public class LazyMutable<T>(initializer: () -> T) : ReadWriteProperty<Any?, T> {
     private var init : (()->T)? = initializer
     private object Uninitialized
-    private var prop: Any? = Uninitialized
+    @Volatile private var prop: Any? = Uninitialized
 
     @Suppress("UNCHECKED_CAST")
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return if (prop == Uninitialized) {
+        return if (prop === Uninitialized) {
             synchronized(this) {
-                return if (prop == Uninitialized) init!!().also { prop = it; init = null } else prop as T
+                return if (prop === Uninitialized) init!!().also { prop = it; init = null } else prop as T
             }
         } else prop as T
     }

@@ -54,8 +54,8 @@ class WrappersTest {
     fun integerScalingRoundsExplicitly() {
         assertEquals(6.bytes, 2.bytes * 3)
         assertEquals(1.bytes, 7.bytes % 2)
-        assertEquals(4.bytes, 7.bytes.divRoundUp(2))
-        assertEquals(3.bytes, 6.bytes.divRoundUp(2))
+        assertEquals(4.bytes, 7.bytes.ceilDiv(2))
+        assertEquals(3.bytes, 6.bytes.ceilDiv(2))
         assertEquals(4.bytes, 3.bytes.timesUp(1.1))
         assertEquals(3.bytes, 3.bytes.timesDown(1.1))
         assertEquals(6.bytes, listOf(1.bytes, 2.bytes, 3.bytes).sum())

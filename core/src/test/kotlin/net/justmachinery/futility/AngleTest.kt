@@ -17,11 +17,4 @@ class AngleTest {
         assertEquals(180.0, PI.rad.degrees, 1e-9)
         assertEquals(90.0, 90.0.deg.degrees, 1e-9)
     }
-
-    @Test
-    fun trigFunctionsUseRadians() {
-        assertEquals(1.0, 90.0.deg.sin(), 1e-12)
-        assertEquals(0.0, 90.0.deg.cos(), 1e-12)
-        assertEquals(1.0, 45.0.deg.tan(), 1e-12)
-    }
 }

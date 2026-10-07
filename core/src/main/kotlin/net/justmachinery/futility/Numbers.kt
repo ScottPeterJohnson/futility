@@ -14,10 +14,36 @@ public fun Long.clampToInt() : Int {
 }
 
 /**
- * Divides [this] by [divisor], rounding up if there is any remainder.
+ * Divides [this] by [divisor], rounding towards positive infinity. See [Math.ceilDiv].
  */
-public fun Long.divRoundUp(divisor : Long) : Long = Math.ceilDiv(this, divisor)
-public fun Int.divRoundUp(divisor : Int) : Int = Math.ceilDiv(this, divisor)
+public fun Long.ceilDiv(divisor : Long) : Long = Math.ceilDiv(this, divisor)
+public fun Int.ceilDiv(divisor : Int) : Int = Math.ceilDiv(this, divisor)
+
+/**
+ * The remainder of [ceilDiv]: zero or the opposite sign of [divisor]. See [Math.ceilMod].
+ */
+public fun Long.ceilMod(divisor : Long) : Long = Math.ceilMod(this, divisor)
+public fun Int.ceilMod(divisor : Int) : Int = Math.ceilMod(this, divisor)
+
+@Deprecated("Use ceilDiv", ReplaceWith("this.ceilDiv(divisor)"))
+public fun Long.divRoundUp(divisor : Long) : Long = ceilDiv(divisor)
+@Deprecated("Use ceilDiv", ReplaceWith("this.ceilDiv(divisor)"))
+public fun Int.divRoundUp(divisor : Int) : Int = ceilDiv(divisor)
+
+/*
+ * Arithmetic that throws [ArithmeticException] on overflow instead of wrapping. See [Math.addExact] and friends.
+ */
+public infix fun Int.plusExact(other : Int) : Int = Math.addExact(this, other)
+public infix fun Long.plusExact(other : Long) : Long = Math.addExact(this, other)
+public infix fun Int.minusExact(other : Int) : Int = Math.subtractExact(this, other)
+public infix fun Long.minusExact(other : Long) : Long = Math.subtractExact(this, other)
+public infix fun Int.timesExact(other : Int) : Int = Math.multiplyExact(this, other)
+public infix fun Long.timesExact(other : Long) : Long = Math.multiplyExact(this, other)
+public fun Int.negateExact() : Int = Math.negateExact(this)
+public fun Long.negateExact() : Long = Math.negateExact(this)
+public fun Int.absExact() : Int = Math.absExact(this)
+public fun Long.absExact() : Long = Math.absExact(this)
+public fun Long.toIntExact() : Int = Math.toIntExact(this)
 
 
 public fun Int.squared() : Int = this * this
