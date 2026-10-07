@@ -22,6 +22,11 @@ public fun Double.isWithin(other: Double, tolerance: Double): Boolean = this in 
 public fun Float.isWithin(other: Float, tolerance: Float): Boolean = this in ((other - tolerance)..(other + tolerance))
 
 
+public fun Int.squared() : Int = this * this
+public fun Long.squared() : Long = this * this
+public fun Double.squared(): Double = this * this
+public fun Float.squared(): Float = this * this
+
 
 //Aliases for java.lang.Math and kotlin's math (which generally uses java.lang.Math) where provided
 
@@ -61,11 +66,6 @@ public fun Long.negateExact() : Long = Math.negateExact(this)
 public fun Int.absExact() : Int = Math.absExact(this)
 public fun Long.absExact() : Long = Math.absExact(this)
 public fun Long.toIntExact() : Int = Math.toIntExact(this)
-
-public fun Int.squared() : Int = this * this
-public fun Long.squared() : Long = this * this
-public fun Double.squared(): Double = this * this
-public fun Float.squared(): Float = this * this
 
 
 public fun Double.sqrt() : Double = sqrt(this)
